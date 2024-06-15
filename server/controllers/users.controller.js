@@ -1,12 +1,12 @@
 import * as db from "../database/db.js";
-import bcrypt from "bcrypt";
+
 import {
   createService,
   findByIdService,
   findAllService,
 } from "../services/users.services.js";
 
-async function createUser(req, res) {
+async function create(req, res) {
   try {
     const user = req.body;
     if (!user.name || !user.email || !user.password) {
@@ -16,8 +16,8 @@ async function createUser(req, res) {
           "Falha ao registrar usuário. Por favor, preencha todos os campos!"
         );
     }
-    const password = await bcrypt.hash(user.password, 10);
-    const userRegister = await createService({ ...user, password: password });
+
+    const userRegister = await createService({ ...user });
 
     res.status(200).send("Usuário registrado");
   } catch (err) {
@@ -26,18 +26,22 @@ async function createUser(req, res) {
 }
 
 async function findById(req, res) {
-  const id = req.params.id;
-  const user = await findByIdService(id);
-  if (!user) return res.status(401).send("Usuário não encontrado");
-  return res.send(user);
+  try {
+    const id = req.params.id;
+    const user = await findByIdService(id);
+    if (!user) return res.status(401).send("Usuário não encontrado");
+    return res.send(user);
+  } catch (e) {
+    return res.status(500).send(e.message);
+  }
 }
 
 async function findAll(req, res) {
   try {
     const users = await findAllService();
-    res.status(200).send(users.rows);
+    res.status(200).send(users);
   } catch (e) {
-    return res.status(400).send("Erro ao buscar usuários");
+    return res.status(400).send(e.message);
   }
 }
-export { createUser, findById, findAll };
+export { create, findById, findAll };

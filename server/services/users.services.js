@@ -1,19 +1,16 @@
 import * as db from "../database/db.js";
+import bcrypt from "bcrypt";
+import userModel from "../database/user.model.js";
 
 async function createService(user) {
-  const res = await db.query(
-    "INSERT INTO users  (userName, userPassword, userEmail) VALUES ($1, $2, $3)",
-    [user.name, user.password, user.email]
-  );
-  return res;
+  const password = await bcrypt.hash(user.password, 10);
+  const newUser = await userModel.create({ ...user, password: password });
+  return newUser;
 }
 
 async function findByIdService(id) {
   try {
-    const data = await db.query(
-      "SELECT username, useremail FROM users WHERE userid = $1",
-      [id]
-    );
+    const data = await userModel.findById(id);
     return data.rows[0];
   } catch (e) {
     return undefined;
@@ -21,6 +18,10 @@ async function findByIdService(id) {
 }
 
 async function findAllService() {
-  return await db.query("SELECT username, userpassword FROM users");
+  const users = await userModel.findAll();
+  if (!users) throw new Error("No user registered");
+
+  return users;
 }
+
 export { createService, findByIdService, findAllService };
